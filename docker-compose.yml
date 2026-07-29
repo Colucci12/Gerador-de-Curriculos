@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./gerador:/app/gerador
+      - ./input:/app/input
+      - ./output:/app/output
+    working_dir: /app

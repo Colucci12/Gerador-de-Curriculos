@@ -1,0 +1,19 @@
+Vaga: Desenvolvedor(a) Backend Python
+
+Empresa: Exemplo Tech
+
+Descrição:
+Buscamos profissional com experiência em Python, APIs REST, Docker e bancos relacionais.
+Responsabilidades incluem desenvolver e manter serviços, participar de code review e
+colaborar com o time de produto.
+
+Requisitos:
+- Python
+- Docker
+- SQL
+- Git
+- Boa comunicação
+
+Diferenciais:
+- Experiência com cloud
+- Conhecimento em CI/CD

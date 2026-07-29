@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ name }}</title>
+  <link rel="stylesheet" href="resume.css">
+</head>
+<body>
+
+  <!-- CABEÇALHO -->
+  <header>
+    <h1>{{ name }}</h1>
+    {% if has_contact %}
+    <div class="contact">
+      {% if contact.email %}{{ contact.email }}{% endif %}
+      {% if contact.telefone %}{% if contact.email %} • {% endif %}{{ contact.telefone }}{% endif %}
+      {% if contact.cidade %}{% if contact.email or contact.telefone %} • {% endif %}{{ contact.cidade }}{% endif %}
+      {% if contact.linkedin %}{% if contact.email or contact.telefone or contact.cidade %} • {% endif %}<a href="{{ contact.linkedin }}">LinkedIn</a>{% endif %}
+      {% if contact.github %}{% if contact.email or contact.telefone or contact.cidade or contact.linkedin %} • {% endif %}<a href="{{ contact.github }}">GitHub</a>{% endif %}
+    </div>
+    {% endif %}
+  </header>
+
+  <!-- RESUMO PROFISSIONAL -->
+  {% if summary %}
+  <section>
+    <h2>Resumo Profissional</h2>
+    <p class="summary">{{ summary | safe }}</p>
+  </section>
+  {% endif %}
+
+  <!-- EXPERIÊNCIA PROFISSIONAL (PRIMEIRO LUGAR) -->
+  {% if experience %}
+  <section>
+    <h2>Experiência Profissional</h2>
+    {% for job in experience %}
+    <article class="job-block">
+      <div class="row">
+        <span class="company">{{ job.company | default(job.title) }}</span>
+        <span class="date-location">
+          {% if job.period %}{{ job.period }}{% endif %}
+          {% if job.period and job.location %} | {% endif %}
+          {% if job.location %}{{ job.location }}{% endif %}
+        </span>
+      </div>
+      {% if job.role %}
+      <div class="role">{{ job.role }}</div>
+      {% endif %}
+      {% if job.bullets %}
+      <ul>
+        {% for bullet in job.bullets %}
+        <li>{{ bullet | safe }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- HABILIDADES E COMPETÊNCIAS -->
+  {% if skills %}
+  <section>
+    <h2>Habilidades e Competências</h2>
+    <div class="skills-block">
+      {% for item in skills %}
+        {% if item is mapping %}
+          <p><strong>{{ item.category }}:</strong> {{ item['items'] | safe }}</p>
+        {% else %}
+          <p>{{ item | safe }}</p>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- EDUCAÇÃO -->
+  {% if education %}
+  <section>
+    <h2>Educação</h2>
+    {% for edu in education %}
+      {% if edu is mapping %}
+      <article class="job-block">
+        <div class="row">
+          <span class="company">{{ edu.institution }}</span>
+          <span class="date-location">
+            {% if edu.period %}{{ edu.period }}{% endif %}
+            {% if edu.period and edu.location %} | {% endif %}
+            {% if edu.location %}{{ edu.location }}{% endif %}
+          </span>
+        </div>
+        {% if edu.degree %}
+        <div class="role">{{ edu.degree }}</div>
+        {% endif %}
+        {% if edu.bullets %}
+        <ul>
+          {% for bullet in edu.bullets %}
+          <li>{{ bullet | safe }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </article>
+      {% else %}
+        <p class="simple-item">{{ edu | safe }}</p>
+      {% endif %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- PROJETOS E ATIVIDADES (SEMCOMP, LIGA, ETC) -->
+  {% if projects %}
+  <section>
+    <h2>Projetos e Atividades</h2>
+    {% for project in projects %}
+    <article class="job-block">
+      <div class="row">
+        <span class="company">{{ project.title }}</span>
+        {% if project.period %}
+        <span class="date-location">{{ project.period }}</span>
+        {% endif %}
+      </div>
+      {% if project.bullets %}
+      <ul>
+        {% for bullet in project.bullets %}
+        <li>{{ bullet | safe }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+</body>
+</html>

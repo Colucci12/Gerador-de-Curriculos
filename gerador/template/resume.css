@@ -1,0 +1,118 @@
+@page {
+  size: A4;
+  margin: 1.2cm 1.5cm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.35;
+  color: #111111;
+  margin: 0;
+  padding: 0;
+}
+
+/* HEADER ESTILO CLASSICO */
+header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20pt;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0 0 4px 0;
+  color: #000000;
+}
+
+.contact {
+  font-size: 10.5pt;
+  color: #333333;
+}
+
+/* ESTILIZAÇÃO DE LINKS DENTRO DO PDF */
+.contact a, a {
+  color: #0044cc;
+  text-decoration: none;
+}
+
+.contact a:hover, a:hover {
+  text-decoration: underline;
+}
+
+/* SEÇÕES COM LINHA DIVISÓRIA */
+section {
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 13.5pt;
+  font-weight: normal;
+  text-transform: uppercase;
+  color: #222222;
+  border-bottom: 1.2px solid #000000;
+  padding-bottom: 2px;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* LINHAS FLEXBOX (EMPRESA NA ESQUERDA, DATA NA DIREITA) */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1px;
+}
+
+.company {
+  font-weight: bold;
+  font-size: 12pt;
+  color: #000000;
+}
+
+.role {
+  font-style: italic;
+  font-size: 9.5pt;
+  color: #333333;
+  margin-bottom: 6px;
+}
+
+.date-location {
+  font-size: 8.5pt;
+  color: #555555;
+  text-align: right;
+}
+
+/* ELEMENTOS DE TEXTO */
+ul {
+  margin: 2px 0 6px 0;
+  padding-left: 16px;
+}
+
+li {
+  margin-bottom: 2.5px;
+}
+
+p.summary, .skills-block p, .simple-item {
+  margin: 3px 0;
+}
+
+strong {
+  font-weight: bold;
+  color: #000000;
+}
+
+.job-block {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: 8px;
+}
