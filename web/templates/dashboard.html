@@ -16,7 +16,7 @@
   <a href="{{ url_for('main.dashboard', tab='profile') }}"
      role="button"
      class="{% if active_tab != 'profile' %}outline{% endif %}">1. Perfil mestre</a>
-  <a href="{{ url_for('main.dashboard', tab='generator') }}"
+  <a href="{{ url_for('main.dashboard', tab='generator', step='input') }}"
      role="button"
      class="{% if active_tab != 'generator' %}outline{% endif %}">2. Gerador</a>
 </div>
@@ -24,7 +24,7 @@
 {% if active_tab == 'profile' %}
 <article>
   <header><h2>Perfil mestre</h2></header>
-  <p>Cole aqui tudo o que você já fez (mesmo formato do <code>master_profile.md</code>).</p>
+  <p>Cole aqui tudo o que você já fez (experiências, skills, formação).</p>
   <form
     method="post"
     action="{{ url_for('main.save_profile') }}"
@@ -44,11 +44,21 @@
 </article>
 {% else %}
 <article>
-  <header><h2>Gerador de currículo</h2></header>
-  <p>Cole a vaga, gere o Markdown com a IA, revise e baixe o PDF.</p>
+  <header>
+    <h2>Gerador de currículo</h2>
+    {% if generator_step == 'review' %}
+    <p>Revise o markdown, escolha tipografia e baixe o PDF.</p>
+    {% else %}
+    <p>Cole a vaga e gere o currículo com a IA.</p>
+    {% endif %}
+  </header>
 
   <div id="generator-panel">
-    {% include "partials/generate_result.html" %}
+    {% if generator_step == 'review' and generated_md %}
+      {% include "partials/generator_review.html" %}
+    {% else %}
+      {% include "partials/generator_input.html" %}
+    {% endif %}
   </div>
 </article>
 {% endif %}

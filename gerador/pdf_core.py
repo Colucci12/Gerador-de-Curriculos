@@ -263,9 +263,41 @@ def has_contact(contact: dict) -> bool:
     )
 
 
-def markdown_to_html(markdown_text: str) -> str:
+VALID_PRESETS = frozenset({"compacto", "normal", "confortavel"})
+DEFAULT_PRESET = "normal"
+VALID_FONT_FAMILIES = frozenset({"serif", "sans"})
+DEFAULT_FONT_FAMILY = "sans"
+
+
+def normalize_preset(preset: str | None) -> str:
+    value = (preset or DEFAULT_PRESET).strip().lower()
+    if value not in VALID_PRESETS:
+        raise ValueError(
+            f"Preset inválido: {preset!r}. Use: compacto, normal ou confortavel."
+        )
+    return value
+
+
+def normalize_font_family(font_family: str | None) -> str:
+    value = (font_family or DEFAULT_FONT_FAMILY).strip().lower()
+    if value not in VALID_FONT_FAMILIES:
+        raise ValueError(
+            f"Família de fonte inválida: {font_family!r}. Use: serif ou sans."
+        )
+    return value
+
+
+def markdown_to_html(
+    markdown_text: str,
+    preset: str = DEFAULT_PRESET,
+    font_family: str = DEFAULT_FONT_FAMILY,
+) -> str:
+    preset = normalize_preset(preset)
+    font_family = normalize_font_family(font_family)
     context = enrich_context_with_html(parse_markdown(markdown_text))
     context["has_contact"] = has_contact(context.get("contact", {}))
+    context["preset"] = preset
+    context["font_family"] = font_family
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_DIR)),
         autoescape=select_autoescape(["html", "xml"]),
@@ -273,22 +305,47 @@ def markdown_to_html(markdown_text: str) -> str:
     return env.get_template("resume.html").render(**context)
 
 
-def render_pdf_bytes(markdown_text: str) -> bytes:
-    """Compila markdown em PDF e retorna bytes (para download web)."""
+def render_pdf_bytes(
+    markdown_text: str,
+    preset: str = DEFAULT_PRESET,
+    font_family: str = DEFAULT_FONT_FAMILY,
+) -> bytes:
+    """Compila markdown em PDF e retorna bytes (para download/preview web)."""
     if not markdown_text.strip():
         raise ValueError("markdown está vazio.")
-    html_str = markdown_to_html(markdown_text)
+    html_str = markdown_to_html(
+        markdown_text, preset=preset, font_family=font_family
+    )
     buffer = BytesIO()
     HTML(string=html_str, base_url=str(TEMPLATE_DIR)).write_pdf(buffer)
     return buffer.getvalue()
 
 
-def render_pdf_to_path(markdown_text: str, out_path: Path) -> None:
+def count_pdf_pages(pdf_bytes: bytes) -> int:
+    from pypdf import PdfReader
+
+    reader = PdfReader(BytesIO(pdf_bytes))
+    return len(reader.pages)
+
+
+def render_pdf_to_path(
+    markdown_text: str,
+    out_path: Path,
+    preset: str = DEFAULT_PRESET,
+    font_family: str = DEFAULT_FONT_FAMILY,
+) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_bytes(render_pdf_bytes(markdown_text))
+    out_path.write_bytes(
+        render_pdf_bytes(markdown_text, preset=preset, font_family=font_family)
+    )
 
 
-def render_pdf(md_path: Path, out_path: Path) -> None:
+def render_pdf(
+    md_path: Path,
+    out_path: Path,
+    preset: str = DEFAULT_PRESET,
+    font_family: str = DEFAULT_FONT_FAMILY,
+) -> None:
     """Compatível com o CLI: lê arquivo MD e grava PDF."""
     text = md_path.read_text(encoding="utf-8")
-    render_pdf_to_path(text, out_path)
+    render_pdf_to_path(text, out_path, preset=preset, font_family=font_family)

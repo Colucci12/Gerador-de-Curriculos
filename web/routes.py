@@ -14,10 +14,33 @@ from flask import (
 )
 
 from . import auth, db
-from gerador.pdf_core import render_pdf_bytes
+from gerador.pdf_core import (
+    DEFAULT_FONT_FAMILY,
+    DEFAULT_PRESET,
+    count_pdf_pages,
+    normalize_font_family,
+    normalize_preset,
+    render_pdf_bytes,
+)
 from gerador.tailor_core import generate_markdown
 
 bp = Blueprint("main", __name__)
+
+
+def _selected_preset() -> str:
+    try:
+        return normalize_preset(request.form.get("preset") or DEFAULT_PRESET)
+    except ValueError:
+        return DEFAULT_PRESET
+
+
+def _selected_font_family() -> str:
+    try:
+        return normalize_font_family(
+            request.form.get("font_family") or DEFAULT_FONT_FAMILY
+        )
+    except ValueError:
+        return DEFAULT_FONT_FAMILY
 
 
 @bp.route("/register", methods=["GET", "POST"])
@@ -84,12 +107,22 @@ def dashboard():
     profile = db.get_profile(g.user["id"])
     latest = db.get_latest_job_resume(g.user["id"])
     tab = request.args.get("tab", "profile")
+    step = request.args.get("step", "input")
+    if step not in ("input", "review"):
+        step = "input"
+    # Review só faz sentido com MD existente
+    if tab == "generator" and step == "review" and not (latest and latest["generated_md"]):
+        step = "input"
+
     return render_template(
         "dashboard.html",
         master_profile=profile["master_profile_md"] if profile else "",
         job_description=latest["job_description"] if latest else "",
         generated_md=latest["generated_md"] if latest else "",
+        preset=DEFAULT_PRESET,
+        font_family=DEFAULT_FONT_FAMILY,
         active_tab=tab if tab in ("profile", "generator") else "profile",
+        generator_step=step,
     )
 
 
@@ -114,20 +147,18 @@ def generate():
     if not master:
         return (
             render_template(
-                "partials/generate_result.html",
+                "partials/generator_input.html",
                 error="Salve seu perfil mestre na aba Perfil antes de gerar.",
                 job_description=job_description,
-                generated_md="",
             ),
             400,
         )
     if not job_description:
         return (
             render_template(
-                "partials/generate_result.html",
+                "partials/generator_input.html",
                 error="Cole a descrição da vaga.",
                 job_description="",
-                generated_md="",
             ),
             400,
         )
@@ -136,22 +167,61 @@ def generate():
         api_key = auth.decrypt_api_key(g.user["gemini_api_key_encrypted"])
         generated_md = generate_markdown(master, job_description, api_key)
         db.save_job_resume(g.user["id"], job_description, generated_md)
-        return render_template(
-            "partials/generate_result.html",
-            error=None,
+        response = render_template(
+            "partials/generator_review.html",
             job_description=job_description,
             generated_md=generated_md,
+            preset=DEFAULT_PRESET,
+            font_family=DEFAULT_FONT_FAMILY,
         )
+        # Atualiza a URL do browser para o passo review (HTMX)
+        headers = {"HX-Push-Url": url_for("main.dashboard", tab="generator", step="review")}
+        return response, 200, headers
     except Exception as exc:
         return (
             render_template(
-                "partials/generate_result.html",
+                "partials/generator_input.html",
                 error=f"Falha ao gerar com a IA: {exc}",
                 job_description=job_description,
-                generated_md="",
             ),
             500,
         )
+
+
+def _pdf_response(
+    markdown: str, preset: str, font_family: str, *, inline: bool
+) -> Response:
+    pdf_bytes = render_pdf_bytes(
+        markdown, preset=preset, font_family=font_family
+    )
+    pages = count_pdf_pages(pdf_bytes)
+    disposition = "inline" if inline else "attachment; filename=curriculo.pdf"
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": disposition,
+            "X-Page-Count": str(pages),
+            "X-Preset": preset,
+            "X-Font-Family": font_family,
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@bp.route("/preview", methods=["POST"])
+@auth.login_required
+def preview_pdf():
+    markdown = (request.form.get("generated_md") or "").strip()
+    if not markdown:
+        return Response("Markdown vazio.", status=400, mimetype="text/plain")
+
+    preset = _selected_preset()
+    font_family = _selected_font_family()
+    try:
+        return _pdf_response(markdown, preset, font_family, inline=True)
+    except Exception as exc:
+        return Response(f"Erro ao gerar preview: {exc}", status=500, mimetype="text/plain")
 
 
 @bp.route("/pdf", methods=["POST"])
@@ -160,16 +230,12 @@ def download_pdf():
     markdown = (request.form.get("generated_md") or "").strip()
     if not markdown:
         flash("Não há markdown para gerar o PDF. Gere ou cole o conteúdo antes.", "error")
-        return redirect(url_for("main.dashboard", tab="generator"))
+        return redirect(url_for("main.dashboard", tab="generator", step="review"))
 
+    preset = _selected_preset()
+    font_family = _selected_font_family()
     try:
-        pdf_bytes = render_pdf_bytes(markdown)
+        return _pdf_response(markdown, preset, font_family, inline=False)
     except Exception as exc:
         flash(f"Erro ao gerar PDF: {exc}", "error")
-        return redirect(url_for("main.dashboard", tab="generator"))
-
-    return Response(
-        pdf_bytes,
-        mimetype="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=curriculo.pdf"},
-    )
+        return redirect(url_for("main.dashboard", tab="generator", step="review"))

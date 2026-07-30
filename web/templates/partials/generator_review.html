@@ -1,0 +1,163 @@
+{% set current_preset = preset if preset is defined and preset else 'normal' %}
+{% set current_font = font_family if font_family is defined and font_family else 'sans' %}
+
+<p>
+  <a href="{{ url_for('main.dashboard', tab='generator', step='input') }}"
+     role="button"
+     class="outline secondary">← Nova vaga</a>
+</p>
+
+<div class="generator-layout">
+  <div class="generator-editor">
+    <fieldset class="preset-controls">
+      <legend>Densidade tipográfica</legend>
+      <div role="group" class="preset-buttons">
+        <label>
+          <input type="radio" name="preset_ui" value="compacto" {% if current_preset == 'compacto' %}checked{% endif %}>
+          Compacto
+        </label>
+        <label>
+          <input type="radio" name="preset_ui" value="normal" {% if current_preset == 'normal' %}checked{% endif %}>
+          Normal
+        </label>
+        <label>
+          <input type="radio" name="preset_ui" value="confortavel" {% if current_preset == 'confortavel' %}checked{% endif %}>
+          Confortável
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="preset-controls">
+      <legend>Família tipográfica</legend>
+      <div role="group" class="preset-buttons">
+        <label>
+          <input type="radio" name="font_ui" value="sans" {% if current_font == 'sans' %}checked{% endif %}>
+          Moderna (Sans)
+        </label>
+        <label>
+          <input type="radio" name="font_ui" value="serif" {% if current_font == 'serif' %}checked{% endif %}>
+          Tradicional (Serif)
+        </label>
+      </div>
+    </fieldset>
+
+    <label>
+      Markdown gerado (edite se quiser antes do PDF)
+      <textarea id="generated-md" required>{{ generated_md }}</textarea>
+    </label>
+
+    <div class="pdf-actions">
+      <button type="button" id="btn-preview" class="secondary">Atualizar preview</button>
+      <button type="button" id="btn-download">Baixar PDF</button>
+    </div>
+    <p id="page-status" class="page-status" aria-live="polite"></p>
+    <p id="preview-error" class="flash error" hidden></p>
+  </div>
+
+  <div class="generator-preview">
+    <header><strong>Preview do PDF</strong></header>
+    <iframe id="pdf-preview" title="Preview do currículo"></iframe>
+  </div>
+</div>
+
+<script>
+(function () {
+  const previewUrl = {{ url_for('main.preview_pdf') | tojson }};
+  const downloadUrl = {{ url_for('main.download_pdf') | tojson }};
+  const mdEl = document.getElementById('generated-md');
+  const iframe = document.getElementById('pdf-preview');
+  const statusEl = document.getElementById('page-status');
+  const errorEl = document.getElementById('preview-error');
+  const btnPreview = document.getElementById('btn-preview');
+  const btnDownload = document.getElementById('btn-download');
+  let objectUrl = null;
+
+  function selectedPreset() {
+    const checked = document.querySelector('input[name="preset_ui"]:checked');
+    return checked ? checked.value : 'normal';
+  }
+
+  function selectedFont() {
+    const checked = document.querySelector('input[name="font_ui"]:checked');
+    return checked ? checked.value : 'sans';
+  }
+
+  async function refreshPreview() {
+    if (!mdEl || !iframe) return;
+    errorEl.hidden = true;
+    errorEl.textContent = '';
+    statusEl.textContent = 'Gerando preview…';
+    btnPreview.setAttribute('aria-busy', 'true');
+
+    const body = new FormData();
+    body.append('generated_md', mdEl.value);
+    body.append('preset', selectedPreset());
+    body.append('font_family', selectedFont());
+
+    try {
+      const res = await fetch(previewUrl, {
+        method: 'POST',
+        body,
+        credentials: 'same-origin',
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || ('HTTP ' + res.status));
+      }
+      const pages = res.headers.get('X-Page-Count') || '?';
+      const preset = res.headers.get('X-Preset') || selectedPreset();
+      const font = res.headers.get('X-Font-Family') || selectedFont();
+      const blob = await res.blob();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(blob);
+      iframe.src = objectUrl;
+
+      const n = parseInt(pages, 10);
+      const label = 'preset: ' + preset + ', fonte: ' + font;
+      if (!Number.isNaN(n) && n > 1) {
+        statusEl.textContent = 'PDF com ' + n + ' páginas (' + label + '). Considere Compacto ou enxugar o texto.';
+        statusEl.classList.add('warn');
+      } else {
+        statusEl.textContent = 'PDF com ' + pages + ' página(s) — ' + label + '.';
+        statusEl.classList.remove('warn');
+      }
+    } catch (err) {
+      statusEl.textContent = '';
+      errorEl.hidden = false;
+      errorEl.textContent = 'Falha no preview: ' + (err && err.message ? err.message : err);
+    } finally {
+      btnPreview.removeAttribute('aria-busy');
+    }
+  }
+
+  function downloadPdf() {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = downloadUrl;
+
+    const fields = {
+      generated_md: mdEl.value,
+      preset: selectedPreset(),
+      font_family: selectedFont(),
+    };
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+  }
+
+  document.querySelectorAll('input[name="preset_ui"], input[name="font_ui"]').forEach((el) => {
+    el.addEventListener('change', refreshPreview);
+  });
+  btnPreview.addEventListener('click', refreshPreview);
+  btnDownload.addEventListener('click', downloadPdf);
+  refreshPreview();
+})();
+</script>

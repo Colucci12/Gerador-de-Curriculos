@@ -8,8 +8,8 @@
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
   <style>
     :root { --pico-font-size: 16px; }
-    main.container { max-width: 960px; padding-top: 1.5rem; padding-bottom: 2rem; }
-    textarea { min-height: 14rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9rem; }
+    main.container { max-width: 1200px; padding-top: 1.5rem; padding-bottom: 2rem; }
+    textarea { min-height: 12rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9rem; }
     .flash { margin-bottom: 1rem; }
     .flash.error { color: var(--pico-del-color); }
     .flash.success { color: var(--pico-ins-color); }
@@ -17,6 +17,45 @@
     .htmx-indicator.htmx-request { display: inline; }
     .htmx-request .btn-label { display: none; }
     nav { margin-bottom: 1rem; }
+    .generator-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+    @media (min-width: 960px) {
+      .generator-layout { grid-template-columns: 1fr 1fr; align-items: start; }
+      #generated-md { min-height: 18rem; }
+      #pdf-preview { min-height: 70vh; }
+    }
+    .generator-preview iframe {
+      width: 100%;
+      min-height: 28rem;
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: var(--pico-border-radius);
+      background: #f6f6f6;
+    }
+    .preset-controls { margin: 1rem 0; }
+    .preset-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+    }
+    .preset-buttons label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      font-weight: normal;
+    }
+    .pdf-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .page-status { font-size: 0.9rem; color: var(--pico-muted-color); }
+    .page-status.warn { color: #8a5a00; font-weight: 600; }
+    .muted-hint { color: var(--pico-muted-color); font-size: 0.9rem; }
   </style>
 </head>
 <body>

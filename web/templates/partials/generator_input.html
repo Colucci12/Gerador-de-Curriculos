@@ -19,13 +19,6 @@
     <span id="generate-spinner" class="htmx-indicator" aria-busy="true">Gerando… pode levar alguns segundos</span>
   </button>
 </form>
-
-{% if generated_md %}
-<form method="post" action="{{ url_for('main.download_pdf') }}">
-  <label>
-    Markdown gerado (edite se quiser antes do PDF)
-    <textarea name="generated_md" required>{{ generated_md }}</textarea>
-  </label>
-  <button type="submit">Baixar PDF</button>
-</form>
+{% if job_description and not error %}
+<p class="muted-hint">Depois de gerar, você será levado à tela de revisão (markdown, tipografia e preview).</p>
 {% endif %}

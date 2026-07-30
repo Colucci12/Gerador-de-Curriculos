@@ -5,7 +5,7 @@
   <title>{{ name }}</title>
   <link rel="stylesheet" href="resume.css">
 </head>
-<body>
+<body class="preset-{{ preset | default('normal') }} font-{{ font_family | default('sans') }}">
 
   <!-- CABEÇALHO -->
   <header>

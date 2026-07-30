@@ -1,6 +1,138 @@
+/* ==========================================================================
+   FONTES EMBUTIDAS (OFL — EB Garamond / Carlito)
+   ========================================================================== */
+@font-face {
+  font-family: "Resume Serif";
+  src: url("fonts/EBGaramond-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Resume Serif";
+  src: url("fonts/EBGaramond-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Resume Serif";
+  src: url("fonts/EBGaramond-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Resume Sans";
+  src: url("fonts/Carlito-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Resume Sans";
+  src: url("fonts/Carlito-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Resume Sans";
+  src: url("fonts/Carlito-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   CONFIGURAÇÃO PADRÃO (PRESET: NORMAL) — valores tipográficos oficiais
+   ========================================================================== */
+:root {
+  --page-margin: 19mm;
+  --font-body: 10.5pt;
+  --font-h1: 20pt;
+  --font-h2: 13pt;
+  --font-company: 11pt;
+  --font-role: 10.5pt;
+  --font-subtext: 10pt;
+
+  --line-height-body: 1.20;
+  --gap-section: 12px;
+  --gap-h2-margin-top: 12px;
+  --gap-h2-margin-bottom: 4px;
+  --gap-job-block: 8px;
+  --gap-item-li: 3px;
+
+  --color-text-main: #111111;
+  --color-text-muted: #444444;
+  --color-link: #0f2b5c;
+  --color-border: #111111;
+
+  --font-family-serif: "Resume Serif", Georgia, Garamond, "Times New Roman", Times, serif;
+  --font-family-sans: "Resume Sans", Calibri, Arial, Helvetica, "Helvetica Neue", sans-serif;
+  --font-family: var(--font-family-sans);
+}
+
+body.font-serif {
+  --font-family: var(--font-family-serif);
+}
+
+body.font-sans {
+  --font-family: var(--font-family-sans);
+}
+
+/* ==========================================================================
+   OVERWRITES DE DENSIDADE (PRESETS)
+   ========================================================================== */
+body.preset-compacto {
+  --page-margin: 12.7mm;
+  --font-body: 10pt;
+  --font-h1: 18pt;
+  --font-h2: 12pt;
+  --font-company: 10.5pt;
+  --font-role: 10pt;
+  --font-subtext: 9.5pt;
+  --line-height-body: 1.15;
+  --gap-section: 8px;
+  --gap-h2-margin-top: 8px;
+  --gap-h2-margin-bottom: 3px;
+  --gap-job-block: 6px;
+  --gap-item-li: 2px;
+}
+
+body.preset-normal {
+  --page-margin: 19mm;
+  --font-body: 10.5pt;
+  --font-h1: 20pt;
+  --font-h2: 13pt;
+  --font-company: 11pt;
+  --font-role: 10.5pt;
+  --font-subtext: 10pt;
+  --line-height-body: 1.20;
+  --gap-section: 12px;
+  --gap-h2-margin-top: 12px;
+  --gap-h2-margin-bottom: 4px;
+  --gap-job-block: 8px;
+  --gap-item-li: 3px;
+}
+
+body.preset-confortavel {
+  --page-margin: 25.4mm;
+  --font-body: 11pt;
+  --font-h1: 22pt;
+  --font-h2: 14pt;
+  --font-company: 12pt;
+  --font-role: 11pt;
+  --font-subtext: 10.5pt;
+  --line-height-body: 1.25;
+  --gap-section: 16px;
+  --gap-h2-margin-top: 16px;
+  --gap-h2-margin-bottom: 6px;
+  --gap-job-block: 10px;
+  --gap-item-li: 4px;
+}
+
+/* ==========================================================================
+   REGRAS DE RENDERIZAÇÃO WEASYPRINT
+   ========================================================================== */
 @page {
   size: A4;
-  margin: 1.2cm 1.5cm;
+  margin: var(--page-margin);
 }
 
 * {
@@ -8,64 +140,55 @@
 }
 
 body {
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 10.5pt;
-  line-height: 1.35;
-  color: #111111;
+  font-family: var(--font-family);
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text-main);
   margin: 0;
   padding: 0;
 }
 
-/* HEADER ESTILO CLASSICO */
 header {
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--gap-section);
 }
 
 h1 {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 20pt;
-  font-weight: normal;
+  font-size: var(--font-h1);
+  font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
   margin: 0 0 4px 0;
   color: #000000;
 }
 
 .contact {
-  font-size: 10.5pt;
-  color: #333333;
+  font-size: var(--font-subtext);
+  color: var(--color-text-muted);
 }
 
-/* ESTILIZAÇÃO DE LINKS DENTRO DO PDF */
-.contact a, a {
-  color: #0044cc;
+.contact a,
+a {
+  color: var(--color-link);
   text-decoration: none;
 }
 
-.contact a:hover, a:hover {
-  text-decoration: underline;
-}
-
-/* SEÇÕES COM LINHA DIVISÓRIA */
 section {
-  margin-bottom: 10px;
+  margin-bottom: var(--gap-section);
 }
 
 h2 {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 13.5pt;
-  font-weight: normal;
+  font-size: var(--font-h2);
+  font-weight: bold;
   text-transform: uppercase;
-  color: #222222;
-  border-bottom: 1.2px solid #000000;
+  color: #000000;
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 2px;
-  margin-top: 16px;
-  margin-bottom: 6px;
+  margin-top: var(--gap-h2-margin-top);
+  margin-bottom: var(--gap-h2-margin-bottom);
   letter-spacing: 0.5px;
 }
 
-/* LINHAS FLEXBOX (EMPRESA NA ESQUERDA, DATA NA DIREITA) */
 .row {
   display: flex;
   justify-content: space-between;
@@ -75,35 +198,36 @@ h2 {
 
 .company {
   font-weight: bold;
-  font-size: 12pt;
+  font-size: var(--font-company);
   color: #000000;
 }
 
 .role {
   font-style: italic;
-  font-size: 9.5pt;
-  color: #333333;
-  margin-bottom: 6px;
+  font-size: var(--font-role);
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
 }
 
 .date-location {
-  font-size: 8.5pt;
-  color: #555555;
+  font-size: var(--font-subtext);
+  color: var(--color-text-muted);
   text-align: right;
 }
 
-/* ELEMENTOS DE TEXTO */
 ul {
-  margin: 2px 0 6px 0;
+  margin: 2px 0 4px 0;
   padding-left: 16px;
 }
 
 li {
-  margin-bottom: 2.5px;
+  margin-bottom: var(--gap-item-li);
 }
 
-p.summary, .skills-block p, .simple-item {
-  margin: 3px 0;
+p.summary,
+.skills-block p,
+.simple-item {
+  margin: 2px 0;
 }
 
 strong {
@@ -114,5 +238,5 @@ strong {
 .job-block {
   break-inside: avoid;
   page-break-inside: avoid;
-  margin-bottom: 8px;
+  margin-bottom: var(--gap-job-block);
 }
