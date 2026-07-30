@@ -1,0 +1,31 @@
+{% if error %}
+<p class="flash error" role="alert">{{ error }}</p>
+{% endif %}
+
+<form
+  id="generate-form"
+  method="post"
+  action="{{ url_for('main.generate') }}"
+  hx-post="{{ url_for('main.generate') }}"
+  hx-target="#generator-panel"
+  hx-swap="innerHTML"
+  hx-indicator="#generate-spinner">
+  <label>
+    Descrição da vaga
+    <textarea name="job_description" required placeholder="Cole o texto da vaga aqui…">{{ job_description or '' }}</textarea>
+  </label>
+  <button type="submit">
+    <span class="btn-label">Gerar com IA</span>
+    <span id="generate-spinner" class="htmx-indicator" aria-busy="true">Gerando… pode levar alguns segundos</span>
+  </button>
+</form>
+
+{% if generated_md %}
+<form method="post" action="{{ url_for('main.download_pdf') }}">
+  <label>
+    Markdown gerado (edite se quiser antes do PDF)
+    <textarea name="generated_md" required>{{ generated_md }}</textarea>
+  </label>
+  <button type="submit">Baixar PDF</button>
+</form>
+{% endif %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Resume Tailor{% endblock %}
+{% block content %}
+<nav>
+  <ul>
+    <li><strong>{{ g.user.email }}</strong></li>
+  </ul>
+  <ul>
+    <li><a href="{{ url_for('main.logout') }}">Sair</a></li>
+  </ul>
+</nav>
+
+<h1>Resume Tailor</h1>
+
+<div role="group">
+  <a href="{{ url_for('main.dashboard', tab='profile') }}"
+     role="button"
+     class="{% if active_tab != 'profile' %}outline{% endif %}">1. Perfil mestre</a>
+  <a href="{{ url_for('main.dashboard', tab='generator') }}"
+     role="button"
+     class="{% if active_tab != 'generator' %}outline{% endif %}">2. Gerador</a>
+</div>
+
+{% if active_tab == 'profile' %}
+<article>
+  <header><h2>Perfil mestre</h2></header>
+  <p>Cole aqui tudo o que você já fez (mesmo formato do <code>master_profile.md</code>).</p>
+  <form
+    method="post"
+    action="{{ url_for('main.save_profile') }}"
+    hx-post="{{ url_for('main.save_profile') }}"
+    hx-target="#profile-status"
+    hx-swap="innerHTML">
+    <label>
+      Master profile (Markdown)
+      <textarea name="master_profile_md" required>{{ master_profile }}</textarea>
+    </label>
+    <button type="submit">
+      <span class="btn-label">Salvar perfil</span>
+      <span class="htmx-indicator" aria-busy="true">Salvando…</span>
+    </button>
+  </form>
+  <div id="profile-status"></div>
+</article>
+{% else %}
+<article>
+  <header><h2>Gerador de currículo</h2></header>
+  <p>Cole a vaga, gere o Markdown com a IA, revise e baixe o PDF.</p>
+
+  <div id="generator-panel">
+    {% include "partials/generate_result.html" %}
+  </div>
+</article>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Cadastro — Resume Tailor{% endblock %}
+{% block content %}
+<article>
+  <h1>Criar conta</h1>
+  <p>Use sua própria chave da API Gemini (free tier).</p>
+  <form method="post" action="{{ url_for('main.register') }}">
+    <label>
+      E-mail
+      <input type="email" name="email" required autocomplete="username">
+    </label>
+    <label>
+      Senha (mín. 6 caracteres)
+      <input type="password" name="password" required minlength="6" autocomplete="new-password">
+    </label>
+    <label>
+      Chave Gemini API
+      <input type="password" name="gemini_api_key" required autocomplete="off"
+             placeholder="Cole a chave do Google AI Studio">
+    </label>
+    <button type="submit">Cadastrar</button>
+  </form>
+  <p><a href="{{ url_for('main.login') }}">Já tenho conta</a></p>
+</article>
+{% endblock %}

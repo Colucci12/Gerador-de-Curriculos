@@ -1,4 +1,4 @@
-"""Adapta o master_profile.md à vaga via Gemini e grava job_profile.md."""
+"""CLI opcional: adapta master_profile.md à vaga via Gemini."""
 
 from __future__ import annotations
 
@@ -7,46 +7,24 @@ import os
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
-from google import genai
-
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from dotenv import load_dotenv
+
+from gerador.tailor_core import generate_markdown, load_prompt_template
+
 GERADOR = Path(__file__).resolve().parent
 DEFAULT_MASTER = GERADOR / "master_profile.md"
 DEFAULT_PROMPT = GERADOR / "prompt_template.txt"
 DEFAULT_OUTPUT = ROOT / "output" / "job_profile.md"
-MODEL = "gemini-flash-latest"
 
 
 def read_text(path: Path) -> str:
     if not path.is_file():
         raise FileNotFoundError(f"Arquivo não encontrado: {path}")
     return path.read_text(encoding="utf-8")
-
-
-def build_prompt(template: str, master_profile: str, job_description: str) -> str:
-    return (
-        template.replace("{master_profile}", master_profile).replace(
-            "{job_description}", job_description
-        )
-    )
-
-
-def call_gemini(prompt: str, api_key: str) -> str:
-    client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(model=MODEL, contents=prompt)
-    text = (response.text or "").strip()
-    if not text:
-        raise RuntimeError("A API Gemini retornou uma resposta vazia.")
-    # Remove cercas de código se o modelo envolver a resposta em ```markdown
-    if text.startswith("```"):
-        lines = text.splitlines()
-        if lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        text = "\n".join(lines).strip()
-    return text
 
 
 def parse_args() -> argparse.Namespace:
@@ -94,22 +72,12 @@ def main() -> int:
     try:
         job_description = read_text(args.vaga)
         master_profile = read_text(args.master)
-        template = read_text(args.prompt)
-    except FileNotFoundError as exc:
-        print(f"Erro: {exc}", file=sys.stderr)
-        return 1
-
-    if not job_description.strip():
-        print(f"Erro: o arquivo de vaga está vazio: {args.vaga}", file=sys.stderr)
-        return 1
-
-    prompt = build_prompt(template, master_profile, job_description)
-    print(f"Chamando Gemini ({MODEL})...")
-
-    try:
-        tailored = call_gemini(prompt, api_key)
+        template = load_prompt_template(args.prompt)
+        tailored = generate_markdown(
+            master_profile, job_description, api_key, prompt_template=template
+        )
     except Exception as exc:
-        print(f"Erro na API Gemini: {exc}", file=sys.stderr)
+        print(f"Erro: {exc}", file=sys.stderr)
         return 1
 
     args.out.parent.mkdir(parents=True, exist_ok=True)

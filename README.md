@@ -1,49 +1,47 @@
-# Gerador de Currículos
+# Resume Tailor — Gerador de Currículos
 
-Adapta seu perfil (`master_profile.md`) a uma vaga (arquivo `.txt`) via Gemini e gera um PDF com HTML/CSS. Tudo roda no Docker — não precisa instalar Python localmente.
+Interface web (Flask) para adaptar seu perfil a uma vaga via Gemini e baixar o PDF. A lógica de IA/PDF é a mesma dos scripts CLI, chamada como funções Python dentro do container.
 
 ## Setup
 
-1. Copie a chave da API:
+1. Copie o `.env`:
    ```bash
    cp .env.example .env
    ```
-   Edite `.env` e coloque sua `GOOGLE_API_KEY` ([Google AI Studio](https://aistudio.google.com/apikey)).
+2. Preencha no `.env`:
+   - `SECRET_KEY` — string longa aleatória (sessão)
+   - `ENCRYPTION_KEY` — gere com:
+     ```bash
+     docker run --rm python:3.12-slim python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+     ```
+     (ou após o build: `docker compose run --rm web python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`)
+   - `GOOGLE_API_KEY` — opcional, só para o CLI
 
-2. Preencha `gerador/master_profile.md` com suas experiências reais.
-
-3. Build da imagem:
+3. Build e suba a web:
    ```bash
    docker compose build
+   docker compose up
    ```
+   Abra http://localhost:8000
 
-## Uso
+4. Cadastre-se com e-mail, senha e **sua** chave Gemini ([AI Studio](https://aistudio.google.com/apikey)).
 
-1. Coloque o texto da vaga em `input/`, por exemplo `input/vaga_empresa_x.txt`.
+## Uso (web)
 
-2. Gere o markdown adaptado:
-   ```bash
-   docker compose run --rm app python gerador/script_tailor.py input/vaga_empresa_x.txt
-   ```
-   Saída: `output/job_profile.md`
+1. Aba **Perfil mestre** — cole/salve seu markdown de competências.
+2. Aba **Gerador** — cole a vaga → **Gerar com IA** → revise o MD → **Baixar PDF**.
+3. O banco (`data/app.db`) guarda perfil e os MDs gerados. O PDF só é baixado (não fica no DB).
 
-3. Gere o PDF:
-   ```bash
-   docker compose run --rm app python gerador/script_pdf.py output/job_profile.md --out output/vaga_empresa_x.pdf
-   ```
+## CLI opcional (mesmas funções)
 
-Teste rápido com o exemplo incluso:
 ```bash
-docker compose run --rm app python gerador/script_tailor.py input/exemplo_vaga.txt
-docker compose run --rm app python gerador/script_pdf.py output/job_profile.md --out output/exemplo.pdf
+docker compose run --rm web python gerador/script_tailor.py input/exemplo_vaga.txt
+docker compose run --rm web python gerador/script_pdf.py output/job_profile.md --out output/exemplo.pdf
 ```
 
 ## Estrutura
 
-- `gerador/master_profile.md` — seu banco de competências
-- `gerador/prompt_template.txt` — instruções da IA
-- `gerador/script_tailor.py` — vaga + master → `job_profile.md`
-- `gerador/script_pdf.py` — markdown → PDF
-- `gerador/template/` — HTML/CSS do currículo (substitua pelo seu layout quando quiser)
-- `input/` — textos de vaga
-- `output/` — markdown e PDFs gerados
+- `web/` — Flask, auth, SQLite, templates HTMX + Pico.css
+- `gerador/tailor_core.py` / `pdf_core.py` — lógica reutilizada pela web e pelo CLI
+- `gerador/prompt_template.txt` / `template/` — prompt e layout do PDF
+- `data/` — `app.db` (volume Docker)

@@ -1,6 +1,11 @@
 # Segredos
 .env
 
+# Banco local
+data/*
+!data/.gitkeep
+*.db
+
 # Saídas geradas
 output/*
 !output/.gitkeep
