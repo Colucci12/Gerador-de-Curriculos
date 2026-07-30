@@ -1,17 +1,32 @@
 services:
   web:
-    build: .
-    ports:
-      - "8000:8000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gerador-curriculo-web
+    restart: unless-stopped
     env_file:
       - .env
     environment:
       DATABASE_PATH: /app/data/app.db
     volumes:
-      - ./gerador:/app/gerador
-      - ./web:/app/web
-      - ./data:/app/data
-      - ./input:/app/input
-      - ./output:/app/output
-    working_dir: /app
-    command: gunicorn -b 0.0.0.0:8000 -w 1 --timeout 120 "web:create_app()"
+      - app_data:/app/data
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
+      - traefik.http.routers.gerador-curriculo.rule=Host(`${APP_DOMAIN}`)
+      - traefik.http.routers.gerador-curriculo.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.gerador-curriculo.tls=true
+      - traefik.http.routers.gerador-curriculo.tls.certresolver=leresolver
+      - traefik.http.routers.gerador-curriculo.service=gerador-curriculo
+      - traefik.http.services.gerador-curriculo.loadbalancer.server.port=8000
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}
+
+volumes:
+  app_data:
