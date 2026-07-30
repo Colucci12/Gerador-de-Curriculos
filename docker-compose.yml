@@ -5,10 +5,11 @@ services:
       dockerfile: Dockerfile
     container_name: gerador-curriculo-web
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       DATABASE_PATH: /app/data/app.db
+      SECRET_KEY: ${SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
     volumes:
       - app_data:/app/data
     networks:
