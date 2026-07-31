@@ -43,5 +43,5 @@ docker compose run --rm web python gerador/script_pdf.py output/job_profile.md -
 
 - `web/` — Flask, auth, SQLite, templates HTMX + Pico.css
 - `gerador/tailor_core.py` / `pdf_core.py` — lógica reutilizada pela web e pelo CLI
-- `gerador/prompt_template.txt` / `template/` — prompt e layout do PDF
+- `gerador/prompt_template_pt-BR.txt` / `prompt_template_en-US.txt` / `template/` — prompts por idioma e layout do PDF
 - `data/` — `app.db` (volume Docker)

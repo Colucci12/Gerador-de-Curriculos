@@ -2,6 +2,8 @@
 <p class="flash error" role="alert">{{ error }}</p>
 {% endif %}
 
+{% set current_lang = language if language is defined and language else 'pt-BR' %}
+
 <form
   id="generate-form"
   method="post"
@@ -10,6 +12,19 @@
   hx-target="#generator-panel"
   hx-swap="innerHTML"
   hx-indicator="#generate-spinner">
+  <fieldset class="preset-controls">
+    <legend>Idioma do currículo</legend>
+    <div role="group" class="preset-buttons">
+      <label>
+        <input type="radio" name="language" value="pt-BR" {% if current_lang == 'pt-BR' %}checked{% endif %}>
+        Português (Brasil)
+      </label>
+      <label>
+        <input type="radio" name="language" value="en-US" {% if current_lang == 'en-US' %}checked{% endif %}>
+        English (US)
+      </label>
+    </div>
+  </fieldset>
   <label>
     Descrição da vaga
     <textarea name="job_description" required placeholder="Cole o texto da vaga aqui…">{{ job_description or '' }}</textarea>

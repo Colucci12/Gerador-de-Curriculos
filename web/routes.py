@@ -16,9 +16,12 @@ from flask import (
 from . import auth, db
 from gerador.pdf_core import (
     DEFAULT_FONT_FAMILY,
+    DEFAULT_LANGUAGE,
     DEFAULT_PRESET,
     count_pdf_pages,
+    detect_language_from_markdown,
     normalize_font_family,
+    normalize_language,
     normalize_preset,
     render_pdf_bytes,
 )
@@ -41,6 +44,18 @@ def _selected_font_family() -> str:
         )
     except ValueError:
         return DEFAULT_FONT_FAMILY
+
+
+def _selected_language(markdown: str | None = None) -> str:
+    raw = (request.form.get("language") or "").strip()
+    if raw:
+        try:
+            return normalize_language(raw)
+        except ValueError:
+            pass
+    if markdown:
+        return detect_language_from_markdown(markdown)
+    return DEFAULT_LANGUAGE
 
 
 @bp.route("/register", methods=["GET", "POST"])
@@ -121,6 +136,11 @@ def dashboard():
         generated_md=latest["generated_md"] if latest else "",
         preset=DEFAULT_PRESET,
         font_family=DEFAULT_FONT_FAMILY,
+        language=(
+            detect_language_from_markdown(latest["generated_md"])
+            if latest and latest["generated_md"]
+            else DEFAULT_LANGUAGE
+        ),
         active_tab=tab if tab in ("profile", "generator") else "profile",
         generator_step=step,
     )
@@ -141,6 +161,7 @@ def save_profile():
 @auth.login_required
 def generate():
     job_description = (request.form.get("job_description") or "").strip()
+    language = _selected_language()
     profile = db.get_profile(g.user["id"])
     master = (profile["master_profile_md"] if profile else "").strip()
 
@@ -150,6 +171,7 @@ def generate():
                 "partials/generator_input.html",
                 error="Salve seu perfil mestre na aba Perfil antes de gerar.",
                 job_description=job_description,
+                language=language,
             ),
             400,
         )
@@ -159,13 +181,16 @@ def generate():
                 "partials/generator_input.html",
                 error="Cole a descrição da vaga.",
                 job_description="",
+                language=language,
             ),
             400,
         )
 
     try:
         api_key = auth.decrypt_api_key(g.user["gemini_api_key_encrypted"])
-        generated_md = generate_markdown(master, job_description, api_key)
+        generated_md = generate_markdown(
+            master, job_description, api_key, language=language
+        )
         db.save_job_resume(g.user["id"], job_description, generated_md)
         response = render_template(
             "partials/generator_review.html",
@@ -173,6 +198,7 @@ def generate():
             generated_md=generated_md,
             preset=DEFAULT_PRESET,
             font_family=DEFAULT_FONT_FAMILY,
+            language=language,
         )
         # Atualiza a URL do browser para o passo review (HTMX)
         headers = {"HX-Push-Url": url_for("main.dashboard", tab="generator", step="review")}
@@ -183,16 +209,17 @@ def generate():
                 "partials/generator_input.html",
                 error=f"Falha ao gerar com a IA: {exc}",
                 job_description=job_description,
+                language=language,
             ),
             500,
         )
 
 
 def _pdf_response(
-    markdown: str, preset: str, font_family: str, *, inline: bool
+    markdown: str, preset: str, font_family: str, language: str, *, inline: bool
 ) -> Response:
     pdf_bytes = render_pdf_bytes(
-        markdown, preset=preset, font_family=font_family
+        markdown, preset=preset, font_family=font_family, language=language
     )
     pages = count_pdf_pages(pdf_bytes)
     disposition = "inline" if inline else "attachment; filename=curriculo.pdf"
@@ -204,6 +231,7 @@ def _pdf_response(
             "X-Page-Count": str(pages),
             "X-Preset": preset,
             "X-Font-Family": font_family,
+            "X-Language": language,
             "Cache-Control": "no-store",
         },
     )
@@ -218,8 +246,11 @@ def preview_pdf():
 
     preset = _selected_preset()
     font_family = _selected_font_family()
+    language = _selected_language(markdown)
     try:
-        return _pdf_response(markdown, preset, font_family, inline=True)
+        return _pdf_response(
+            markdown, preset, font_family, language, inline=True
+        )
     except Exception as exc:
         return Response(f"Erro ao gerar preview: {exc}", status=500, mimetype="text/plain")
 
@@ -234,8 +265,11 @@ def download_pdf():
 
     preset = _selected_preset()
     font_family = _selected_font_family()
+    language = _selected_language(markdown)
     try:
-        return _pdf_response(markdown, preset, font_family, inline=False)
+        return _pdf_response(
+            markdown, preset, font_family, language, inline=False
+        )
     except Exception as exc:
         flash(f"Erro ao gerar PDF: {exc}", "error")
         return redirect(url_for("main.dashboard", tab="generator", step="review"))
