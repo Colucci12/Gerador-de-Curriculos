@@ -1,5 +1,6 @@
 {% set current_preset = preset if preset is defined and preset else 'normal' %}
 {% set current_font = font_family if font_family is defined and font_family else 'sans' %}
+{% set current_lang = language if language is defined and language else 'pt-BR' %}
 
 <p>
   <a href="{{ url_for('main.dashboard', tab='generator', step='input') }}"
@@ -9,6 +10,8 @@
 
 <div class="generator-layout">
   <div class="generator-editor">
+    <input type="hidden" id="resume-language" value="{{ current_lang }}">
+
     <fieldset class="preset-controls">
       <legend>Densidade tipográfica</legend>
       <div role="group" class="preset-buttons">
@@ -65,6 +68,7 @@
   const previewUrl = {{ url_for('main.preview_pdf') | tojson }};
   const downloadUrl = {{ url_for('main.download_pdf') | tojson }};
   const mdEl = document.getElementById('generated-md');
+  const langEl = document.getElementById('resume-language');
   const iframe = document.getElementById('pdf-preview');
   const statusEl = document.getElementById('page-status');
   const errorEl = document.getElementById('preview-error');
@@ -82,6 +86,10 @@
     return checked ? checked.value : 'sans';
   }
 
+  function selectedLanguage() {
+    return langEl && langEl.value ? langEl.value : 'pt-BR';
+  }
+
   async function refreshPreview() {
     if (!mdEl || !iframe) return;
     errorEl.hidden = true;
@@ -93,6 +101,7 @@
     body.append('generated_md', mdEl.value);
     body.append('preset', selectedPreset());
     body.append('font_family', selectedFont());
+    body.append('language', selectedLanguage());
 
     try {
       const res = await fetch(previewUrl, {
@@ -107,13 +116,14 @@
       const pages = res.headers.get('X-Page-Count') || '?';
       const preset = res.headers.get('X-Preset') || selectedPreset();
       const font = res.headers.get('X-Font-Family') || selectedFont();
+      const lang = res.headers.get('X-Language') || selectedLanguage();
       const blob = await res.blob();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       objectUrl = URL.createObjectURL(blob);
       iframe.src = objectUrl;
 
       const n = parseInt(pages, 10);
-      const label = 'preset: ' + preset + ', fonte: ' + font;
+      const label = 'preset: ' + preset + ', fonte: ' + font + ', idioma: ' + lang;
       if (!Number.isNaN(n) && n > 1) {
         statusEl.textContent = 'PDF com ' + n + ' páginas (' + label + '). Considere Compacto ou enxugar o texto.';
         statusEl.classList.add('warn');
@@ -139,6 +149,7 @@
       generated_md: mdEl.value,
       preset: selectedPreset(),
       font_family: selectedFont(),
+      language: selectedLanguage(),
     };
     Object.entries(fields).forEach(([name, value]) => {
       const input = document.createElement('input');

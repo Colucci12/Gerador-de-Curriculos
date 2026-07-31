@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ language | default('pt-BR') }}">
 <head>
   <meta charset="UTF-8">
   <title>{{ name }}</title>
@@ -21,18 +21,16 @@
     {% endif %}
   </header>
 
-  <!-- RESUMO PROFISSIONAL -->
   {% if summary %}
   <section>
-    <h2>Resumo Profissional</h2>
+    <h2>{{ labels.summary }}</h2>
     <p class="summary">{{ summary | safe }}</p>
   </section>
   {% endif %}
 
-  <!-- EXPERIÊNCIA PROFISSIONAL (PRIMEIRO LUGAR) -->
   {% if experience %}
   <section>
-    <h2>Experiência Profissional</h2>
+    <h2>{{ labels.experience }}</h2>
     {% for job in experience %}
     <article class="job-block">
       <div class="row">
@@ -58,10 +56,9 @@
   </section>
   {% endif %}
 
-  <!-- HABILIDADES E COMPETÊNCIAS -->
   {% if skills %}
   <section>
-    <h2>Habilidades e Competências</h2>
+    <h2>{{ labels.skills }}</h2>
     <div class="skills-block">
       {% for item in skills %}
         {% if item is mapping %}
@@ -74,10 +71,9 @@
   </section>
   {% endif %}
 
-  <!-- EDUCAÇÃO -->
   {% if education %}
   <section>
-    <h2>Educação</h2>
+    <h2>{{ labels.education }}</h2>
     {% for edu in education %}
       {% if edu is mapping %}
       <article class="job-block">
@@ -107,10 +103,9 @@
   </section>
   {% endif %}
 
-  <!-- PROJETOS E ATIVIDADES (SEMCOMP, LIGA, ETC) -->
   {% if projects %}
   <section>
-    <h2>Projetos e Atividades</h2>
+    <h2>{{ labels.projects }}</h2>
     {% for project in projects %}
     <article class="job-block">
       <div class="row">

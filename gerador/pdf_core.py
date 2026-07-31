@@ -33,6 +33,61 @@ CONTACT_KEYS = {
     "github": "github",
 }
 
+SECTION_MAP = {
+    # pt-BR
+    "contato": "contact",
+    "resumo": "summary",
+    "experiência": "experience",
+    "experiencia": "experience",
+    "formação": "education",
+    "formacao": "education",
+    "educação": "education",
+    "educacao": "education",
+    "competências": "skills",
+    "competencias": "skills",
+    "habilidades": "skills",
+    "projetos": "projects",
+    # en-US (ATS-common)
+    "contact": "contact",
+    "summary": "summary",
+    "professional summary": "summary",
+    "experience": "experience",
+    "work experience": "experience",
+    "skills": "skills",
+    "education": "education",
+    "projects": "projects",
+}
+
+SECTION_LABELS = {
+    "pt-BR": {
+        "summary": "Resumo Profissional",
+        "experience": "Experiência Profissional",
+        "skills": "Habilidades e Competências",
+        "education": "Educação",
+        "projects": "Projetos e Atividades",
+    },
+    "en-US": {
+        "summary": "Summary",
+        "experience": "Experience",
+        "skills": "Skills",
+        "education": "Education",
+        "projects": "Projects",
+    },
+}
+
+_EN_SECTION_TITLES = frozenset(
+    {
+        "contact",
+        "summary",
+        "professional summary",
+        "experience",
+        "work experience",
+        "skills",
+        "education",
+        "projects",
+    }
+)
+
 
 def bold_md_to_html(text: str) -> str:
     """Converte apenas **negrito** em <strong>, escapando o restante."""
@@ -146,18 +201,6 @@ def parse_markdown(text: str) -> dict:
             data["summary"] = " ".join(summary_lines).strip()
             summary_lines.clear()
 
-    section_map = {
-        "contato": "contact",
-        "resumo": "summary",
-        "experiência": "experience",
-        "experiencia": "experience",
-        "formação": "education",
-        "formacao": "education",
-        "competências": "skills",
-        "competencias": "skills",
-        "projetos": "projects",
-    }
-
     for raw_line in text.splitlines():
         line = raw_line.rstrip()
         if not line.strip():
@@ -176,7 +219,7 @@ def parse_markdown(text: str) -> dict:
             flush_item()
             flush_summary()
             title = m2.group(1).strip().lower()
-            section = section_map.get(title)
+            section = SECTION_MAP.get(title)
             continue
 
         m3 = HEADING_H3.match(line)
@@ -267,6 +310,8 @@ VALID_PRESETS = frozenset({"compacto", "normal", "confortavel"})
 DEFAULT_PRESET = "normal"
 VALID_FONT_FAMILIES = frozenset({"serif", "sans"})
 DEFAULT_FONT_FAMILY = "sans"
+DEFAULT_LANGUAGE = "pt-BR"
+VALID_LANGUAGES = frozenset({"pt-BR", "en-US"})
 
 
 def normalize_preset(preset: str | None) -> str:
@@ -287,17 +332,59 @@ def normalize_font_family(font_family: str | None) -> str:
     return value
 
 
+def normalize_language(language: str | None) -> str:
+    value = (language or DEFAULT_LANGUAGE).strip()
+    lowered = value.lower().replace("_", "-")
+    aliases = {
+        "pt": "pt-BR",
+        "pt-br": "pt-BR",
+        "en": "en-US",
+        "en-us": "en-US",
+    }
+    normalized = aliases.get(lowered, value if value in VALID_LANGUAGES else "")
+    if normalized not in VALID_LANGUAGES:
+        raise ValueError(
+            f"Idioma inválido: {language!r}. Use: pt-BR ou en-US."
+        )
+    return normalized
+
+
+def detect_language_from_markdown(markdown_text: str) -> str:
+    """Infere idioma pelos H2 ATS; default pt-BR."""
+    for raw_line in markdown_text.splitlines():
+        m2 = HEADING_H2.match(raw_line.rstrip())
+        if not m2:
+            continue
+        title = m2.group(1).strip().lower()
+        if title in _EN_SECTION_TITLES:
+            return "en-US"
+        if title in SECTION_MAP:
+            return "pt-BR"
+    return DEFAULT_LANGUAGE
+
+
+def section_labels_for(language: str) -> dict[str, str]:
+    return dict(SECTION_LABELS[normalize_language(language)])
+
+
 def markdown_to_html(
     markdown_text: str,
     preset: str = DEFAULT_PRESET,
     font_family: str = DEFAULT_FONT_FAMILY,
+    language: str | None = None,
 ) -> str:
     preset = normalize_preset(preset)
     font_family = normalize_font_family(font_family)
+    if language:
+        lang = normalize_language(language)
+    else:
+        lang = detect_language_from_markdown(markdown_text)
     context = enrich_context_with_html(parse_markdown(markdown_text))
     context["has_contact"] = has_contact(context.get("contact", {}))
     context["preset"] = preset
     context["font_family"] = font_family
+    context["language"] = lang
+    context["labels"] = section_labels_for(lang)
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_DIR)),
         autoescape=select_autoescape(["html", "xml"]),
@@ -309,12 +396,16 @@ def render_pdf_bytes(
     markdown_text: str,
     preset: str = DEFAULT_PRESET,
     font_family: str = DEFAULT_FONT_FAMILY,
+    language: str | None = None,
 ) -> bytes:
     """Compila markdown em PDF e retorna bytes (para download/preview web)."""
     if not markdown_text.strip():
         raise ValueError("markdown está vazio.")
     html_str = markdown_to_html(
-        markdown_text, preset=preset, font_family=font_family
+        markdown_text,
+        preset=preset,
+        font_family=font_family,
+        language=language,
     )
     buffer = BytesIO()
     HTML(string=html_str, base_url=str(TEMPLATE_DIR)).write_pdf(buffer)
@@ -333,10 +424,16 @@ def render_pdf_to_path(
     out_path: Path,
     preset: str = DEFAULT_PRESET,
     font_family: str = DEFAULT_FONT_FAMILY,
+    language: str | None = None,
 ) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_bytes(
-        render_pdf_bytes(markdown_text, preset=preset, font_family=font_family)
+        render_pdf_bytes(
+            markdown_text,
+            preset=preset,
+            font_family=font_family,
+            language=language,
+        )
     )
 
 
@@ -345,7 +442,14 @@ def render_pdf(
     out_path: Path,
     preset: str = DEFAULT_PRESET,
     font_family: str = DEFAULT_FONT_FAMILY,
+    language: str | None = None,
 ) -> None:
     """Compatível com o CLI: lê arquivo MD e grava PDF."""
     text = md_path.read_text(encoding="utf-8")
-    render_pdf_to_path(text, out_path, preset=preset, font_family=font_family)
+    render_pdf_to_path(
+        text,
+        out_path,
+        preset=preset,
+        font_family=font_family,
+        language=language,
+    )
