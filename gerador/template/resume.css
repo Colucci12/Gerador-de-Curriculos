@@ -133,6 +133,37 @@ body.preset-confortavel {
   --gap-item-li: 4px;
 }
 
+/* Compensação métrica Latin Modern (só serif): −0.5pt + line-height mais baixo */
+body.font-serif.preset-compacto {
+  --font-body: 9.5pt;
+  --font-h1: 17.5pt;
+  --font-h2: 11.5pt;
+  --font-company: 10pt;
+  --font-role: 9.5pt;
+  --font-subtext: 9pt;
+  --line-height-body: 1.10;
+}
+
+body.font-serif.preset-normal {
+  --font-body: 10pt;
+  --font-h1: 19.5pt;
+  --font-h2: 12.5pt;
+  --font-company: 10.5pt;
+  --font-role: 10pt;
+  --font-subtext: 9.5pt;
+  --line-height-body: 1.12;
+}
+
+body.font-serif.preset-confortavel {
+  --font-body: 10.5pt;
+  --font-h1: 21.5pt;
+  --font-h2: 13.5pt;
+  --font-company: 11.5pt;
+  --font-role: 10.5pt;
+  --font-subtext: 10pt;
+  --line-height-body: 1.15;
+}
+
 /* ==========================================================================
    REGRAS DE RENDERIZAÇÃO WEASYPRINT
    ========================================================================== */
