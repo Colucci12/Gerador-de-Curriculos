@@ -1,22 +1,28 @@
 /* ==========================================================================
-   FONTES EMBUTIDAS (OFL — EB Garamond / Carlito)
+   FONTES EMBUTIDAS (GFL — Latin Modern Roman / OFL — Carlito)
    ========================================================================== */
 @font-face {
   font-family: "Resume Serif";
-  src: url("fonts/EBGaramond-Regular.ttf") format("truetype");
+  src: url("fonts/lmroman10-regular.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
 }
 @font-face {
   font-family: "Resume Serif";
-  src: url("fonts/EBGaramond-Bold.ttf") format("truetype");
+  src: url("fonts/lmroman10-bold.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
 }
 @font-face {
   font-family: "Resume Serif";
-  src: url("fonts/EBGaramond-Italic.ttf") format("truetype");
+  src: url("fonts/lmroman10-italic.otf") format("opentype");
   font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Resume Serif";
+  src: url("fonts/lmroman10-bolditalic.otf") format("opentype");
+  font-weight: 700;
   font-style: italic;
 }
 
@@ -63,7 +69,7 @@
   --color-link: #0f2b5c;
   --color-border: #111111;
 
-  --font-family-serif: "Resume Serif", Georgia, Garamond, "Times New Roman", Times, serif;
+  --font-family-serif: "Resume Serif", "Latin Modern Roman", "Computer Modern", "Times New Roman", Times, serif;
   --font-family-sans: "Resume Sans", Calibri, Arial, Helvetica, "Helvetica Neue", sans-serif;
   --font-family: var(--font-family-sans);
 }
