@@ -139,3 +139,27 @@ def get_latest_job_resume(user_id: int) -> sqlite3.Row | None:
             """,
             (user_id,),
         ).fetchone()
+
+
+def list_job_resumes(user_id: int, limit: int = 30) -> list[sqlite3.Row]:
+    with connect() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM job_resumes
+            WHERE user_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (user_id, limit),
+        ).fetchall()
+
+
+def get_job_resume(user_id: int, resume_id: int) -> sqlite3.Row | None:
+    with connect() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM job_resumes
+            WHERE user_id = ? AND id = ?
+            """,
+            (user_id, resume_id),
+        ).fetchone()

@@ -29,6 +29,9 @@
     <a href="{{ url_for('main.dashboard', tab='generator', step='input') }}"
        role="button"
        class="{% if active_tab != 'generator' %}outline{% endif %}">2. Gerador</a>
+    <a href="{{ url_for('main.dashboard', tab='history') }}"
+       role="button"
+       class="{% if active_tab != 'history' %}outline{% endif %}">3. Histórico</a>
   </div>
 </div>
 
@@ -68,6 +71,28 @@
       </div>
     </article>
   </div>
+</article>
+
+{% elif active_tab == 'history' %}
+<article>
+  <header>
+    <h2>Histórico</h2>
+    <p>Últimas gerações. Clique para abrir na revisão (sem gerar de novo).</p>
+  </header>
+
+  {% if history_items %}
+  <div class="history-list">
+    {% for item in history_items %}
+    <a class="history-row"
+       href="{{ url_for('main.dashboard', tab='generator', step='review', resume_id=item.id) }}">
+      <span class="history-label">{{ item.label }}</span>
+      <span class="history-open muted-hint">Abrir</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted-hint">Nenhuma geração ainda. Use o Gerador para criar o primeiro currículo.</p>
+  {% endif %}
 </article>
 
 {% elif active_tab == 'profile' %}
