@@ -38,10 +38,22 @@ def encrypt_api_key(api_key: str) -> str:
 
 
 def decrypt_api_key(token: str) -> str:
+    if not (token or "").strip():
+        raise RuntimeError("Nenhuma chave Gemini cadastrada.")
     try:
         return _fernet().decrypt(token.encode("utf-8")).decode("utf-8")
     except InvalidToken as exc:
         raise RuntimeError("Não foi possível descriptografar a chave Gemini.") from exc
+
+
+def user_has_api_key(user) -> bool:
+    """True se o campo da chave Gemini não está vazio (sem descriptografar)."""
+    if user is None:
+        return False
+    try:
+        return bool((user["gemini_api_key_encrypted"] or "").strip())
+    except (KeyError, IndexError, TypeError):
+        return False
 
 
 def login_user(user_id: int) -> None:

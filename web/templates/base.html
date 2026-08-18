@@ -56,6 +56,33 @@
     .page-status { font-size: 0.9rem; color: var(--pico-muted-color); }
     .page-status.warn { color: #8a5a00; font-weight: 600; }
     .muted-hint { color: var(--pico-muted-color); font-size: 0.9rem; }
+    .nav-icon-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem;
+      border-radius: var(--pico-border-radius);
+      color: inherit;
+      text-decoration: none;
+    }
+    .nav-icon-link:hover,
+    .nav-icon-link.active { opacity: 0.85; }
+    .nav-gear { display: block; vertical-align: middle; }
+    .provider-cards {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .provider-cards { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    }
+    .provider-card {
+      margin: 0;
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: var(--pico-border-radius);
+      padding: 1rem 1.25rem;
+    }
+    .provider-card header { margin-bottom: 0.75rem; }
   </style>
 </head>
 <body>

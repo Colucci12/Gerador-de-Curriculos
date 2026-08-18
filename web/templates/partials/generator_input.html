@@ -3,6 +3,15 @@
 {% endif %}
 
 {% set current_lang = language if language is defined and language else 'pt-BR' %}
+{% set can_generate = has_api_key if has_api_key is defined else true %}
+
+{% if not can_generate %}
+<p class="flash error" role="alert">
+  Nenhuma chave Gemini cadastrada.
+  <a href="{{ url_for('main.dashboard', tab='settings') }}">Abra Configurações</a>
+  para cadastrar uma chave antes de gerar.
+</p>
+{% endif %}
 
 <form
   id="generate-form"
@@ -29,11 +38,11 @@
     Descrição da vaga
     <textarea name="job_description" required placeholder="Cole o texto da vaga aqui…">{{ job_description or '' }}</textarea>
   </label>
-  <button type="submit">
+  <button type="submit" {% if not can_generate %}disabled aria-disabled="true"{% endif %}>
     <span class="btn-label">Gerar com IA</span>
     <span id="generate-spinner" class="htmx-indicator" aria-busy="true">Gerando… pode levar alguns segundos</span>
   </button>
 </form>
-{% if job_description and not error %}
+{% if job_description and not error and can_generate %}
 <p class="muted-hint">Depois de gerar, você será levado à tela de revisão (markdown, tipografia e preview).</p>
 {% endif %}

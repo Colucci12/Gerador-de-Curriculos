@@ -103,6 +103,19 @@ def save_profile(user_id: int, master_profile_md: str) -> None:
         )
 
 
+def update_gemini_api_key(user_id: int, encrypted: str) -> None:
+    """Atualiza a chave Gemini. String vazia = sem chave cadastrada."""
+    with connect() as conn:
+        conn.execute(
+            """
+            UPDATE users
+            SET gemini_api_key_encrypted = ?
+            WHERE id = ?
+            """,
+            (encrypted, user_id),
+        )
+
+
 def save_job_resume(user_id: int, job_description: str, generated_md: str) -> int:
     with connect() as conn:
         cur = conn.execute(
