@@ -125,10 +125,13 @@ def dashboard():
     step = request.args.get("step", "input")
     if step not in ("input", "review"):
         step = "input"
+    if tab not in ("profile", "generator", "settings"):
+        tab = "profile"
     # Review só faz sentido com MD existente
     if tab == "generator" and step == "review" and not (latest and latest["generated_md"]):
         step = "input"
 
+    has_api_key = auth.user_has_api_key(g.user)
     return render_template(
         "dashboard.html",
         master_profile=profile["master_profile_md"] if profile else "",
@@ -141,9 +144,37 @@ def dashboard():
             if latest and latest["generated_md"]
             else DEFAULT_LANGUAGE
         ),
-        active_tab=tab if tab in ("profile", "generator") else "profile",
+        active_tab=tab,
         generator_step=step,
+        has_api_key=has_api_key,
     )
+
+
+@bp.route("/settings/api-key", methods=["POST"])
+@auth.login_required
+def save_api_key():
+    api_key = (request.form.get("gemini_api_key") or "").strip()
+    if not api_key:
+        flash("Cole uma chave Gemini válida.", "error")
+        return redirect(url_for("main.dashboard", tab="settings"))
+    try:
+        encrypted = auth.encrypt_api_key(api_key)
+        db.update_gemini_api_key(g.user["id"], encrypted)
+        flash("Chave Gemini salva.", "success")
+    except Exception as exc:
+        flash(f"Erro ao salvar chave: {exc}", "error")
+    return redirect(url_for("main.dashboard", tab="settings"))
+
+
+@bp.route("/settings/api-key/delete", methods=["POST"])
+@auth.login_required
+def delete_api_key():
+    try:
+        db.update_gemini_api_key(g.user["id"], "")
+        flash("Chave Gemini removida.", "success")
+    except Exception as exc:
+        flash(f"Erro ao remover chave: {exc}", "error")
+    return redirect(url_for("main.dashboard", tab="settings"))
 
 
 @bp.route("/profile", methods=["POST"])
@@ -157,6 +188,20 @@ def save_profile():
     return redirect(url_for("main.dashboard", tab="profile"))
 
 
+def _generator_input_context(
+    *,
+    job_description: str = "",
+    language: str | None = None,
+    error: str | None = None,
+) -> dict:
+    return {
+        "error": error,
+        "job_description": job_description,
+        "language": language or DEFAULT_LANGUAGE,
+        "has_api_key": auth.user_has_api_key(g.user),
+    }
+
+
 @bp.route("/generate", methods=["POST"])
 @auth.login_required
 def generate():
@@ -165,13 +210,27 @@ def generate():
     profile = db.get_profile(g.user["id"])
     master = (profile["master_profile_md"] if profile else "").strip()
 
+    if not auth.user_has_api_key(g.user):
+        return (
+            render_template(
+                "partials/generator_input.html",
+                **_generator_input_context(
+                    job_description=job_description,
+                    language=language,
+                    error="Cadastre uma chave Gemini em Configurações antes de gerar.",
+                ),
+            ),
+            400,
+        )
     if not master:
         return (
             render_template(
                 "partials/generator_input.html",
-                error="Salve seu perfil mestre na aba Perfil antes de gerar.",
-                job_description=job_description,
-                language=language,
+                **_generator_input_context(
+                    job_description=job_description,
+                    language=language,
+                    error="Salve seu perfil mestre na aba Perfil antes de gerar.",
+                ),
             ),
             400,
         )
@@ -179,9 +238,11 @@ def generate():
         return (
             render_template(
                 "partials/generator_input.html",
-                error="Cole a descrição da vaga.",
-                job_description="",
-                language=language,
+                **_generator_input_context(
+                    job_description="",
+                    language=language,
+                    error="Cole a descrição da vaga.",
+                ),
             ),
             400,
         )
@@ -207,9 +268,11 @@ def generate():
         return (
             render_template(
                 "partials/generator_input.html",
-                error=f"Falha ao gerar com a IA: {exc}",
-                job_description=job_description,
-                language=language,
+                **_generator_input_context(
+                    job_description=job_description,
+                    language=language,
+                    error=f"Falha ao gerar com a IA: {exc}",
+                ),
             ),
             500,
         )
