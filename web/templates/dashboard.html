@@ -6,66 +6,64 @@
     <li><strong>{{ g.user.email }}</strong></li>
   </ul>
   <ul>
-    <li>
-      <a href="{{ url_for('main.dashboard', tab='settings') }}"
-         class="nav-icon-link{% if active_tab == 'settings' %} active{% endif %}"
-         title="Configurações"
-         aria-label="Configurações">
-        <svg class="nav-gear" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      </a>
-    </li>
     <li><a href="{{ url_for('main.logout') }}">Sair</a></li>
   </ul>
 </nav>
 
 <h1>Resume Tailor</h1>
 
-{% if active_tab != 'settings' %}
-<div role="group">
+<div role="group" class="main-tabs">
   <a href="{{ url_for('main.dashboard', tab='profile') }}"
      role="button"
      class="{% if active_tab != 'profile' %}outline{% endif %}">1. Perfil mestre</a>
   <a href="{{ url_for('main.dashboard', tab='generator', step='input') }}"
      role="button"
      class="{% if active_tab != 'generator' %}outline{% endif %}">2. Gerador</a>
+  <a href="{{ url_for('main.dashboard', tab='settings') }}"
+     role="button"
+     class="tab-settings{% if active_tab != 'settings' %} outline{% endif %}">
+    <svg class="tab-gear" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+    Configurações
+  </a>
 </div>
-{% endif %}
 
 {% if active_tab == 'settings' %}
 <article>
   <header>
     <h2>Configurações</h2>
-    <p><a href="{{ url_for('main.dashboard', tab='profile') }}">← Voltar ao dashboard</a></p>
+    <p>Gerencie as chaves de API dos provedores de IA.</p>
   </header>
 
   <div class="provider-cards">
     <article class="provider-card">
-      <header><strong>Gemini</strong></header>
-      {% if has_api_key %}
-      <p class="muted-hint">Chave cadastrada.</p>
-      {% else %}
-      <p class="flash error" role="status">Nenhuma chave cadastrada. Sem ela não é possível gerar currículos.</p>
-      {% endif %}
+      <div class="provider-meta">
+        <strong class="provider-name">Gemini</strong>
+        {% if has_api_key %}
+        <span class="muted-hint">Chave cadastrada</span>
+        {% else %}
+        <span class="flash error provider-status" role="status">Nenhuma chave</span>
+        {% endif %}
+      </div>
 
-      <form method="post" action="{{ url_for('main.save_api_key') }}">
-        <label>
-          {% if has_api_key %}Nova chave Gemini{% else %}Chave Gemini API{% endif %}
-          <input type="password" name="gemini_api_key" required autocomplete="off"
-                 placeholder="Cole a chave do Google AI Studio">
-        </label>
-        <div class="pdf-actions">
-          <button type="submit">Salvar chave</button>
-        </div>
-      </form>
-      {% if has_api_key %}
-      <form method="post" action="{{ url_for('main.delete_api_key') }}" class="pdf-actions"
-            onsubmit="return confirm('Remover a chave Gemini? Você não poderá gerar currículos até cadastrar outra.');">
-        <button type="submit" class="secondary outline">Excluir chave</button>
-      </form>
-      {% endif %}
+      <div class="provider-actions">
+        <form method="post" action="{{ url_for('main.save_api_key') }}" class="provider-save-form">
+          <label class="provider-input-label">
+            <span class="visually-hidden">{% if has_api_key %}Nova chave Gemini{% else %}Chave Gemini API{% endif %}</span>
+            <input type="password" name="gemini_api_key" required autocomplete="off"
+                   placeholder="Cole a chave do Google AI Studio">
+          </label>
+          <button type="submit">Salvar</button>
+        </form>
+        {% if has_api_key %}
+        <form method="post" action="{{ url_for('main.delete_api_key') }}" class="provider-delete-form"
+              onsubmit="return confirm('Remover a chave Gemini? Você não poderá gerar currículos até cadastrar outra.');">
+          <button type="submit" class="secondary outline">Excluir</button>
+        </form>
+        {% endif %}
+      </div>
     </article>
   </div>
 </article>
