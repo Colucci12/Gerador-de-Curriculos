@@ -66,23 +66,34 @@
     .generate-bar > button {
       margin: 0;
       width: auto;
-      flex: 0 0 auto;
+      min-width: 10rem;
+      flex: 1 1 auto;
     }
     .model-select-label {
       margin: 0;
       margin-left: auto;
-      min-width: 12rem;
-      max-width: 100%;
-      flex: 1 1 14rem;
+      flex: 0 1 auto;
+      max-width: 20rem;
+      width: auto;
     }
     .model-select-label select {
       margin: 0;
-      width: 100%;
+      width: auto;
+      max-width: 20rem;
+      min-width: 12rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 0.9rem;
     }
     @media (max-width: 640px) {
-      .model-select-label { margin-left: 0; flex: 1 1 100%; }
+      .model-select-label {
+        margin-left: 0;
+        flex: 1 1 100%;
+        max-width: 100%;
+      }
+      .model-select-label select {
+        width: 100%;
+        max-width: 100%;
+      }
       .generate-bar > button { width: 100%; }
     }
     .tabs-row {

@@ -84,7 +84,7 @@ def _is_excluded_model(model_id: str) -> bool:
 
 
 def _model_sort_key(model_id: str) -> tuple:
-    """Flash versionado primeiro; aliases -latest/-exp depois; resto no fim."""
+    """Flash versionado primeiro (IDs novos antes); aliases -latest/-exp; resto."""
     lowered = model_id.lower()
     is_latest_or_exp = "-latest" in lowered or "-exp" in lowered
     is_flash = "flash" in lowered
@@ -94,7 +94,8 @@ def _model_sort_key(model_id: str) -> tuple:
         tier = 1
     else:
         tier = 2
-    return (tier, lowered)
+    # Dentro do tier: nome DESC (3.7 antes de 2.5)
+    return (tier, tuple(-ord(c) for c in lowered))
 
 
 def list_text_models(
