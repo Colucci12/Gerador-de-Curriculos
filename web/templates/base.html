@@ -196,6 +196,33 @@
       width: auto;
     }
     .provider-delete-form { margin: 0; }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .history-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+      margin: 0;
+      padding: 0.85rem 1.1rem;
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: var(--pico-border-radius);
+      text-decoration: none;
+      color: inherit;
+      box-sizing: border-box;
+    }
+    .history-row:hover {
+      border-color: var(--pico-primary);
+    }
+    .history-label {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .history-open { flex-shrink: 0; }
     @media (max-width: 640px) {
       .provider-card {
         flex-direction: column;

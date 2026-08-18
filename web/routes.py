@@ -29,6 +29,26 @@ from gerador.tailor_core import generate_markdown, list_text_models
 
 bp = Blueprint("main", __name__)
 
+HISTORY_LIMIT = 30
+
+
+def _format_resume_created_at(raw: str | None) -> str:
+    """SQLite CURRENT_TIMESTAMP → DD/MM/YYYY HH:MM."""
+    if not raw:
+        return ""
+    text = str(raw).strip()
+    # "YYYY-MM-DD HH:MM:SS" ou ISO com T
+    text = text.replace("T", " ")
+    parts = text.split(" ")
+    if len(parts) < 2:
+        return text
+    date_part, time_part = parts[0], parts[1]
+    d = date_part.split("-")
+    t = time_part.split(":")
+    if len(d) != 3 or len(t) < 2:
+        return text
+    return f"{d[2]}/{d[1]}/{d[0]} {t[0]}:{t[1]}"
+
 
 def _selected_preset() -> str:
     try:
@@ -125,11 +145,25 @@ def dashboard():
     step = request.args.get("step", "input")
     if step not in ("input", "review"):
         step = "input"
-    if tab not in ("profile", "generator", "settings"):
+    if tab not in ("profile", "generator", "settings", "history"):
         tab = "profile"
-    # Review só faz sentido com MD existente
-    if tab == "generator" and step == "review" and not (latest and latest["generated_md"]):
-        step = "input"
+
+    resume_id = request.args.get("resume_id", type=int)
+    active_resume = None
+    if resume_id is not None:
+        active_resume = db.get_job_resume(g.user["id"], resume_id)
+        if active_resume is None:
+            flash("Currículo do histórico não encontrado.", "error")
+            return redirect(url_for("main.dashboard", tab="history"))
+
+    # Review: resume_id explícito (histórico) ou o mais recente — sem novo INSERT
+    if tab == "generator" and step == "review":
+        display_resume = active_resume if active_resume is not None else latest
+        if not (display_resume and display_resume["generated_md"]):
+            step = "input"
+            display_resume = None
+    else:
+        display_resume = None
 
     has_api_key = auth.user_has_api_key(g.user)
     available_models: list[str] = []
@@ -138,16 +172,33 @@ def dashboard():
     if tab == "generator" and step == "input" and has_api_key:
         available_models, selected_model, models_error = _load_models_for_user()
 
+    history_items: list[dict] = []
+    if tab == "history":
+        for row in db.list_job_resumes(g.user["id"], limit=HISTORY_LIMIT):
+            history_items.append(
+                {
+                    "id": row["id"],
+                    "label": _format_resume_created_at(row["created_at"]),
+                }
+            )
+
+    if tab == "generator" and step == "review" and display_resume:
+        job_description = display_resume["job_description"]
+        generated_md = display_resume["generated_md"]
+    else:
+        job_description = latest["job_description"] if latest else ""
+        generated_md = latest["generated_md"] if latest else ""
+
     return render_template(
         "dashboard.html",
         master_profile=profile["master_profile_md"] if profile else "",
-        job_description=latest["job_description"] if latest else "",
-        generated_md=latest["generated_md"] if latest else "",
+        job_description=job_description,
+        generated_md=generated_md,
         preset=DEFAULT_PRESET,
         font_family=DEFAULT_FONT_FAMILY,
         language=(
-            detect_language_from_markdown(latest["generated_md"])
-            if latest and latest["generated_md"]
+            detect_language_from_markdown(generated_md)
+            if generated_md
             else DEFAULT_LANGUAGE
         ),
         active_tab=tab,
@@ -156,6 +207,7 @@ def dashboard():
         available_models=available_models,
         selected_model=selected_model,
         models_error=models_error,
+        history_items=history_items,
     )
 
 
