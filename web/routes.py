@@ -25,7 +25,7 @@ from gerador.pdf_core import (
     normalize_preset,
     render_pdf_bytes,
 )
-from gerador.tailor_core import generate_markdown
+from gerador.tailor_core import generate_markdown, list_text_models
 
 bp = Blueprint("main", __name__)
 
@@ -132,6 +132,12 @@ def dashboard():
         step = "input"
 
     has_api_key = auth.user_has_api_key(g.user)
+    available_models: list[str] = []
+    selected_model = ""
+    models_error = None
+    if tab == "generator" and step == "input" and has_api_key:
+        available_models, selected_model, models_error = _load_models_for_user()
+
     return render_template(
         "dashboard.html",
         master_profile=profile["master_profile_md"] if profile else "",
@@ -147,6 +153,9 @@ def dashboard():
         active_tab=tab,
         generator_step=step,
         has_api_key=has_api_key,
+        available_models=available_models,
+        selected_model=selected_model,
+        models_error=models_error,
     )
 
 
@@ -188,17 +197,40 @@ def save_profile():
     return redirect(url_for("main.dashboard", tab="profile"))
 
 
+def _load_models_for_user(
+    preferred: str | None = None,
+) -> tuple[list[str], str, str | None]:
+    """Retorna (models, selected, error_message). Sem chave → lista vazia."""
+    if not auth.user_has_api_key(g.user):
+        return [], "", None
+    try:
+        api_key = auth.decrypt_api_key(g.user["gemini_api_key_encrypted"])
+        models = list_text_models(api_key)
+    except Exception as exc:
+        return [], "", f"Não foi possível listar os modelos Gemini: {exc}"
+    if not models:
+        return [], "", "Nenhum modelo de texto disponível para esta chave."
+    preferred = (preferred or "").strip()
+    selected = preferred if preferred in models else models[0]
+    return models, selected, None
+
+
 def _generator_input_context(
     *,
     job_description: str = "",
     language: str | None = None,
     error: str | None = None,
+    preferred_model: str | None = None,
 ) -> dict:
+    models, selected, models_error = _load_models_for_user(preferred_model)
     return {
         "error": error,
         "job_description": job_description,
         "language": language or DEFAULT_LANGUAGE,
         "has_api_key": auth.user_has_api_key(g.user),
+        "available_models": models,
+        "selected_model": selected,
+        "models_error": models_error,
     }
 
 
@@ -207,6 +239,7 @@ def _generator_input_context(
 def generate():
     job_description = (request.form.get("job_description") or "").strip()
     language = _selected_language()
+    requested_model = (request.form.get("model") or "").strip()
     profile = db.get_profile(g.user["id"])
     master = (profile["master_profile_md"] if profile else "").strip()
 
@@ -218,6 +251,7 @@ def generate():
                     job_description=job_description,
                     language=language,
                     error="Cadastre uma chave Gemini em Configurações antes de gerar.",
+                    preferred_model=requested_model,
                 ),
             ),
             400,
@@ -230,6 +264,7 @@ def generate():
                     job_description=job_description,
                     language=language,
                     error="Salve seu perfil mestre na aba Perfil antes de gerar.",
+                    preferred_model=requested_model,
                 ),
             ),
             400,
@@ -242,6 +277,23 @@ def generate():
                     job_description="",
                     language=language,
                     error="Cole a descrição da vaga.",
+                    preferred_model=requested_model,
+                ),
+            ),
+            400,
+        )
+
+    models, selected_model, models_error = _load_models_for_user(requested_model)
+    if models_error or not selected_model:
+        return (
+            render_template(
+                "partials/generator_input.html",
+                **_generator_input_context(
+                    job_description=job_description,
+                    language=language,
+                    error=models_error
+                    or "Nenhum modelo disponível. Recarregue a página.",
+                    preferred_model=requested_model,
                 ),
             ),
             400,
@@ -250,7 +302,11 @@ def generate():
     try:
         api_key = auth.decrypt_api_key(g.user["gemini_api_key_encrypted"])
         generated_md = generate_markdown(
-            master, job_description, api_key, language=language
+            master,
+            job_description,
+            api_key,
+            language=language,
+            model=selected_model,
         )
         db.save_job_resume(g.user["id"], job_description, generated_md)
         response = render_template(
@@ -272,6 +328,7 @@ def generate():
                     job_description=job_description,
                     language=language,
                     error=f"Falha ao gerar com a IA: {exc}",
+                    preferred_model=selected_model,
                 ),
             ),
             500,

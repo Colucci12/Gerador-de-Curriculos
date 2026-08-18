@@ -3,14 +3,22 @@
 {% endif %}
 
 {% set current_lang = language if language is defined and language else 'pt-BR' %}
-{% set can_generate = has_api_key if has_api_key is defined else true %}
+{% set models = available_models if available_models is defined else [] %}
+{% set current_model = selected_model if selected_model is defined else '' %}
+{% set has_key = has_api_key if has_api_key is defined else true %}
+{% set list_error = models_error if models_error is defined else none %}
+{% set can_generate = has_key and models and not list_error %}
 
-{% if not can_generate %}
+{% if not has_key %}
 <p class="flash error" role="alert">
   Nenhuma chave Gemini cadastrada.
   <a href="{{ url_for('main.dashboard', tab='settings') }}">Abra Configurações</a>
   para cadastrar uma chave antes de gerar.
 </p>
+{% elif list_error %}
+<p class="flash error" role="alert">{{ list_error }} Recarregue a página para tentar de novo.</p>
+{% elif not models %}
+<p class="flash error" role="alert">Nenhum modelo disponível. Recarregue a página.</p>
 {% endif %}
 
 <form
@@ -38,10 +46,22 @@
     Descrição da vaga
     <textarea name="job_description" required placeholder="Cole o texto da vaga aqui…">{{ job_description or '' }}</textarea>
   </label>
-  <button type="submit" {% if not can_generate %}disabled aria-disabled="true"{% endif %}>
-    <span class="btn-label">Gerar com IA</span>
-    <span id="generate-spinner" class="htmx-indicator" aria-busy="true">Gerando… pode levar alguns segundos</span>
-  </button>
+  <div class="generate-bar">
+    <button type="submit" {% if not can_generate %}disabled aria-disabled="true"{% endif %}>
+      <span class="btn-label">Gerar com IA</span>
+      <span id="generate-spinner" class="htmx-indicator" aria-busy="true">Gerando… pode levar alguns segundos</span>
+    </button>
+    {% if models %}
+    <label class="model-select-label">
+      <span class="visually-hidden">Modelo</span>
+      <select name="model" aria-label="Modelo Gemini" {% if not can_generate %}disabled{% endif %}>
+        {% for mid in models %}
+        <option value="{{ mid }}" {% if mid == current_model %}selected{% endif %}>{{ mid }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
+  </div>
 </form>
 {% if job_description and not error and can_generate %}
 <p class="muted-hint">Depois de gerar, você será levado à tela de revisão (markdown, tipografia e preview).</p>
