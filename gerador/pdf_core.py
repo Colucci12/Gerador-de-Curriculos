@@ -47,6 +47,7 @@ SECTION_MAP = {
     "competencias": "skills",
     "habilidades": "skills",
     "projetos": "projects",
+    "idiomas": "languages",
     # en-US (ATS-common)
     "contact": "contact",
     "summary": "summary",
@@ -56,6 +57,8 @@ SECTION_MAP = {
     "skills": "skills",
     "education": "education",
     "projects": "projects",
+    "languages": "languages",
+    "spoken languages": "languages",
 }
 
 SECTION_LABELS = {
@@ -65,6 +68,7 @@ SECTION_LABELS = {
         "skills": "Habilidades e Competências",
         "education": "Educação",
         "projects": "Projetos e Atividades",
+        "languages": "Idiomas",
     },
     "en-US": {
         "summary": "Summary",
@@ -72,6 +76,7 @@ SECTION_LABELS = {
         "skills": "Skills",
         "education": "Education",
         "projects": "Projects",
+        "languages": "Languages",
     },
 }
 
@@ -85,6 +90,8 @@ _EN_SECTION_TITLES = frozenset(
         "skills",
         "education",
         "projects",
+        "languages",
+        "spoken languages",
     }
 )
 
@@ -178,6 +185,7 @@ def parse_markdown(text: str) -> dict:
         "education": [],
         "skills": [],
         "projects": [],
+        "languages": [],
     }
 
     section: str | None = None
@@ -241,6 +249,8 @@ def parse_markdown(text: str) -> dict:
                 parse_contact_line(content, data["contact"])
             elif section == "skills":
                 data["skills"].append(parse_skill_line(content))
+            elif section == "languages":
+                data["languages"].append(parse_skill_line(content))
             elif section == "summary":
                 summary_lines.append(content)
             elif (
@@ -293,6 +303,19 @@ def enrich_context_with_html(data: dict) -> dict:
         else:
             skills_out.append(bold_md_to_html(item))
     data["skills"] = skills_out
+
+    languages_out: list = []
+    for item in data.get("languages", []):
+        if isinstance(item, dict):
+            languages_out.append(
+                {
+                    "category": item.get("category", ""),
+                    "items": bold_md_to_html(item.get("items", "")),
+                }
+            )
+        else:
+            languages_out.append(bold_md_to_html(item))
+    data["languages"] = languages_out
 
     for project in data.get("projects", []):
         project["bullets"] = [bold_md_to_html(b) for b in project.get("bullets", [])]
