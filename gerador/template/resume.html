@@ -126,5 +126,20 @@
   </section>
   {% endif %}
 
+  {% if languages %}
+  <section>
+    <h2>{{ labels.languages }}</h2>
+    <div class="skills-block">
+      {% for item in languages %}
+        {% if item is mapping %}
+          <p><strong>{{ item.category }}:</strong> {{ item['items'] | safe }}</p>
+        {% else %}
+          <p>{{ item | safe }}</p>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
 </body>
 </html>
