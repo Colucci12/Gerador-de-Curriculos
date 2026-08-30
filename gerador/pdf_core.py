@@ -41,6 +41,8 @@ SECTION_MAP = {
     "experiencia": "experience",
     "formação": "education",
     "formacao": "education",
+    "formação acadêmica": "education",
+    "formacao academica": "education",
     "educação": "education",
     "educacao": "education",
     "competências": "skills",
@@ -63,16 +65,16 @@ SECTION_MAP = {
 
 SECTION_LABELS = {
     "pt-BR": {
-        "summary": "Resumo Profissional",
-        "experience": "Experiência Profissional",
-        "skills": "Habilidades e Competências",
-        "education": "Educação",
-        "projects": "Projetos e Atividades",
+        "summary": "Resumo",
+        "experience": "Experiência",
+        "skills": "Habilidades",
+        "education": "Formação Acadêmica",
+        "projects": "Projetos",
         "languages": "Idiomas",
     },
     "en-US": {
         "summary": "Summary",
-        "experience": "Experience",
+        "experience": "Work Experience",
         "skills": "Skills",
         "education": "Education",
         "projects": "Projects",

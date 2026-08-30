@@ -47,7 +47,7 @@
       {% if job.bullets %}
       <ul>
         {% for bullet in job.bullets %}
-        <li>{{ bullet | safe }}</li>
+        <li>• {{ bullet | safe }}</li>
         {% endfor %}
       </ul>
       {% endif %}
@@ -91,7 +91,7 @@
         {% if edu.bullets %}
         <ul>
           {% for bullet in edu.bullets %}
-          <li>{{ bullet | safe }}</li>
+          <li>• {{ bullet | safe }}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -117,7 +117,7 @@
       {% if project.bullets %}
       <ul>
         {% for bullet in project.bullets %}
-        <li>{{ bullet | safe }}</li>
+        <li>• {{ bullet | safe }}</li>
         {% endfor %}
       </ul>
       {% endif %}
